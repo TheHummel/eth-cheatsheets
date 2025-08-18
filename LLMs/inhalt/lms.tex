@@ -1,0 +1,202 @@
+\section{LANGUAGE MODELS}
+
+\subsection{Foundations}
+
+\definition{Alphabet} Finite, non-empty set \(\Sigma\). Common compositions: \\
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item $\Sigma^0 = \{\epsilon\}$
+    \item $\Sigma^n = \Sigma \times \cdots \times \Sigma$
+    \item $\Sigma^\infty: \Sigma \times \infty \times \Sigma$
+    \item \(\bar{\Sigma} = \Sigma \cup \{EOS\}\)
+\end{enumerate*}
+
+
+\definition{String} Finite sequence of symbols drawn from the alphabet.
+
+\example \(\Sigma = \{a, b\}\), abaa is a string
+
+Let \(\epsilon\) be the empty string, \(x \cdot \epsilon = \epsilon \cdot x = x\) where \(\cdot\) is \textcolor{mygreen}{concatenation}. \(A \times B = \{x \cdot y | x \in A, y \in B\}\)
+
+\definition{Kleene Closure}
+Let $\Sigma$ be an alphabet. $\textcolor{mygreen}{\Sigma^*} = \bigcup_{n=0}^{\infty} \Sigma^n$
+
+\lemma \(\Sigma^*\) is countable.
+
+
+\definition{Formal Language \(L\) (1)} Subset of \(\Sigma^*\) for some alphabet \(\Sigma\).
+
+\definition{Formal Language \(L\) (2)} Probability distribution over \(\Sigma^*\) for alphabet \(\Sigma\):
+
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item \textcolor{mypurple}{P($\Sigma^*$) = 1, i.e., $\sum_{x \in \Sigma^*}$ p(x) = 1}
+    \item \textcolor{mypurple}{P($\Sigma^\infty$) = 0}
+\end{enumerate*}
+
+\definition{Sequence Model (SM) 1} Set of conditional probability distributions over \(\Sigma\):\\
+$
+p_{SM} (x|\textbf{x}), \quad x \in \Sigma, \textbf{x} \in \Sigma^*, \quad
+\{p(\cdot|\textbf{x})\}_{\textbf{x}\in\Sigma^*} \text{\textcolor{mygray}{(countably inf. many)}}
+$
+\definition{SM 2} Probability space over \(\Sigma^* \cup \Sigma^\infty\)
+
+\definition{Language Model (LM)} (Discrete) Probability distr. \(p_{LM}\) over \(\Sigma^*\). Equiv., a LM is a SM s.t. \(\mathbb{P}(\Sigma^\infty) = 0\)
+
+\subsection{Globally Normalized LMs}
+
+\definition{Energy Function} Function \(\hat{p}: \Sigma^* \rightarrow \mathbb{R}\)
+\comment "The lower the better"
+
+How to go from energy function to LM? \(\rightarrow\) (1) make function non-negative and (2) sum to 1.
+
+\definition{Globally normalized LM} Let \(x \in \Sigma^*, \hat{p}_{GN}: \Sigma^*\to \mathbb{R}\) energy fct.:
+$
+p_{LM}(\mathbf{x}) = \frac{e^\frac{-\hat{p}_{GN}(\mathbf{x})}{T}}{z},
+z = \sum_{x \in \Sigma^*} e^{\frac{- \hat{p}_{GN}(\mathbf{x})}{T}}
+$
+
+\(T \hat{=}\) temperature parameter,
+\(\rightarrow\) lower T makes distr. sharper; higher T makes it flatter/uniform
+\comment problem in practice: z might become \(+\infty\); $L_{GN}$ hard to norm. + hard to sample from
+
+\theorem Any normalizable energy function $p_{GN}$ induces a LM
+\comment $\hat{p}$ is normalizable if $\sum_{\mathbf{y}\in\Sigma^*}e^{-\hat{p}(\mathbf{y})}<\infty$
+
+\subsection{Locally normalized LMs}
+
+\definition{EOS} Distinguished end-of-string symbol: \(EOS \notin \Sigma\)
+
+\definition{Locally normalized LM} Let \(\mathbf{x} \in \Sigma^*, |\mathbf{x}| = T\), then:
+$
+p(\mathbf{x})_{LN} = p_{SM}(EOS|\mathbf{x}) \cdot \Pi_{t=1}^T p_{SM}(x_t|\mathbf{x}_{<t})
+$
+
+% \comment \begin{itemize}
+%     \item \(\mathbf{x}\): string
+%     \item \(x_t\): symbol
+%     \item \(\textbf{x}_{<t} = x_1 \cdots x_{t-1}\): string
+
+% \end{itemize}
+
+\subsection{Tightness}
+
+\definition{Tight LM} Locally norm. LM with:
+$\sum_{\textbf{x} \in \Sigma^*} p_{LN}(\textbf{x}) = 1$
+
+\definition{Tight SM} SM with \(\mathbb{P}(\Sigma^\infty) = 0\) in which case it's also a LM.
+
+\lemma $\sum_{n=0}^\infty x^n = \frac{1}{1-x}$ for $|x|<1$
+
+\theorem A LNM is tight i.f.f. \(\tilde{p}_{\text{EOS}}(t)=1\) for some \(t\) or \(\sum_{t=1}^\infty\tilde{p}_{\text{EOS}}(t) = \infty\), with \(\tilde{p}_{\text{EOS}}(t) = \frac{\sum_{\mathbf{\omega}\in\Sigma^{t-1}}p_{LN}(\mathbf{\omega})p_{LN}(\text{EOS}|\mathbf{\omega})}{\sum_{\mathbf{\omega}\in\Sigma^{t-1}}p_{LN}(\mathbf{\omega})}\)
+
+\comment $\sum_{t=0}^\infty\frac{1}{ct}=\infty$ for $c\in\mathbb{R}^+$
+
+\definition{Prefix probability} Let p be a LM over \(\Sigma\):
+$\pi(x) = \sum_{y\in\Sigma^*}p(xy)$
+
+\comment\\
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item in lecture also denoted as \(\overrightarrow{p}(x)\)
+    \item \(\pi\) is not a prob. distr. over \(\Sigma^*\)
+    \item \(\pi\) is cum. prob. of all strings beginning with x
+    \item \(\pi(x|y) = \frac{\pi(yx)}{\pi(y)}\)
+\end{enumerate*}
+
+\theorem Any LM can be locally normalized:
+$p_{LM}(\mathbf{y}) = p_{LN}(\mathbf{y}) 
+= p_{SM}(EOS|\mathbf{y})\Pi_{t=1}^T p_{SM}(y_t|\mathbf{y}_{<t})$
+
+\textbf{Proof}: Let p be a LM. Define 
+$q(x|\textbf{x}) \hat{=} \overrightarrow{p}(x|\textbf{x})  = \frac{\overrightarrow{p}(\textbf{x}x) }{\overrightarrow{p}(\textbf{x}) }
+q(EOS|\textbf{x}) \hat{=} \frac{p(\textbf{x})}{\overrightarrow{p}(\textbf{x})}$\\
+\textbf{Claim}: 
+$q(EOS|\textbf{x}) \cdot \Pi_{t=1}^T q(x_t|\textbf{x}_{<t})
+= \frac{p(\textbf{x}) }{\overrightarrow{p}(\textbf{x})} \cdot \Pi_{t=1}^T \cdot \frac{\overrightarrow{p}(\textbf{x}_{<t}x_t) }{\overrightarrow{p}(\textbf{x}_{<t})}
+= \frac{p(\textbf{x})}{\overrightarrow{p}(\epsilon)} = p(\textbf{x}) \quad \textcolor{mygray}{(telescop. series)}$\\
+\textbf{Claim}: \(\sum{x\in\Sigma \cup \{EOS\}}q(x|\textbf{x}) = 1\) 
+
+
+\definition{Cylinder Set (of rank k)} Given set \(\mathcal{H}\subseteq\bar{\Sigma}^k\), then:
+$\bar{C}(\mathcal{H}) := \{y\omega|y\in\mathcal{H},\omega\in\bar{\Sigma}^\infty\},
+\bar{C}_k = \{\bar{C}(\mathcal{H})|\mathcal{H}\in\mathcal{P}(\bar{\Sigma}^k)\}, \quad\bar{C} = \bigcup_{k=1}^\infty \bar{C}_k$
+
+\textcolor{mygray}{$\to \bar{C}(\mathcal{H})$: set of inf. strings that share same k-prefix with some string \(\bar{y}\in\mathcal{H}\)}
+
+\example \(\Omega = \{A, B\}\), consider \(\mathcal{H}=\Omega^2\), then \(C(\mathcal{H})=\{\omega=\omega_1\omega_2\omega_3...\in\Omega^\infty|\omega_1,\omega_2\in\Omega^2\}\)
+
+\theorem \(\mathbb{P}(\bar{C}(\mathcal{H}))=\Sigma_{\bar{y}\in\mathcal{H}} \overrightarrow{p}(\bar{y})\)
+
+\lemma \(\Sigma^\infty\) is measurable in \((\Sigma^* \cup \Sigma^\infty, \sigma(C))\)
+
+\comment \\
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item Non-tight SMs involve setting \(p(EOS|x) = 0\)
+    \item \(p(EOS|x)\) can \(\rightarrow0\) and still be tight! Ex.: \(p(a|x) = 1 - \frac{1}{|x|+1}\)
+\end{enumerate*}
+
+\subsection{Representation-based LMs}
+\definition{Inner product space} Vector space \(\mathbb{V}\) over field \(\mathcal{F}\) coupled with an inner product map 
+\(\langle \cdot , \cdot \rangle : \mathbb{V} \times \mathbb{V} \to F\):\\
+\begin{enumerate*}[label=\roman*, itemjoin={\quad}]
+    \item \textbf{Conjugate symmetry}:
+    $\langle v, u \rangle = \overline{\langle u, v \rangle} \quad \forall v, u \in \mathbb{V}$
+
+    \item \textbf{Linearity in $1^{st}$ arg.}:
+    $\langle av + bu, z \rangle = a\langle v, z \rangle + b\langle u, z \rangle \quad \forall v, u, z \in \mathbb{V},$\\
+    $ a, b \in F$
+
+    \item \textbf{Positive-definiteness}:
+    $\langle v, v \rangle > 0 \quad \forall v \neq 0$
+\end{enumerate*}
+
+\definition{Hilbert space} Inner product space that is \textbf{complete} i.e. every Cauchy seq. in \(\mathbb{V}\) remains in \(\mathbb{V}\):\\
+
+$\forall \text{series} \ \sum_{n=1}^\infty\textbf{v}_n \ \text{s.t.} \ \sum_{n=1}^\infty||\textbf{v}_n||<\infty, \quad
+\text{it holds:} \quad \sum_{n=1}^\infty\textbf{v}_n \in \mathbb{V}
+$
+
+% \underline{\textbf{Fundamental Idea:}}
+
+\definition{Softmax}
+$\text{softmax}(x)_j = \frac{e^{x_j}}{\sum_{i=1}^De^{x_i}}, x\in\mathbb{R}^D$
+
+\comment \(\text{softmax}(\frac{x}{T})\) has annealing param. T (temp.); \(\text{lim}_{T\rightarrow\infty} = uniform \rightarrow\)  most entropic; \(\text{softmax}(x+c) = \text{softmax}(x)\) (invariant); derivative:\\
+$\frac{\partial \text{softmax}(\mathbf{x})_i}{\partial x_j} = \delta_{ij}  \frac{e^{x_i}\sum_k e^{x_k} - e^{x_i} e^{x_j}}{\left(\sum_k e^{x_k}\right)^2}
+$
+
+\textbf{Step 1}: Define a SM; \textbf{Step 2}: \(\{p(\cdot|x)\}_{x\in\Sigma^*}\); \textbf{Step 3}: \(p(\cdot|x)=\text{softmax}(E\cdot enc(x))\), \(enc:\Sigma^*\to \mathbb{R}^D\), \(E \in \mathbb{R}^{|\bar{\Sigma}|\times D}\)
+
+\subsection{N-gram Models}
+\definition{Finite-state Automaton} 5-Tuple \((\Sigma, Q, I, F, \delta)\); \(\Sigma\): alphabet, \(Q\): finite set of states, \(I\subseteq Q\): init. states, \(F\subseteq Q\): final states, \(\delta\subseteq Q\times\Sigma\cup\{\epsilon\}\times Q\): transitions
+
+\definition{Regular language} Language recognized by unweighted FSA
+
+\definition{n-gram Model} \(\{p(\cdot|\textbf{x})\}_{\textbf{x}\in\Sigma^*}\) for which:
+$p_{SM}(y_t|\mathbf{y}_{<t}) = p_{SM}(y_t|\mathbf{y}_{t-n+1:t-1})$
+
+\comment n-grams LMs are determ. FS LMs 
+\comment \#params of n-gram LM: \((|\bar{\Sigma}|-1)\Sigma_{j=0}^{n-1}|\Sigma|^j\)
+\comment disadvantages: high params count (needs params sharing), poor perf. with limit. data, no long-range depend.
+
+\textbf{MLE of n-gram LM}:
+\(
+\boldsymbol{\theta} \stackrel{\text{def}}{=} \left\{ \theta_{y|\boldsymbol{y}} \stackrel{\text{def}}{=} p_{\text{SM}}(y|\boldsymbol{y}) \mid y \in \overline{\Sigma}, \boldsymbol{y} \in \overline{\Sigma}^{n-1}, \right. \\
+\left. \theta_{y|\boldsymbol{y}} \ge 0, \sum_{y' \in \overline{\Sigma}} \theta_{y'|\boldsymbol{y}} = 1 \right\}
+\) \\
+\textbf{MLE solution}: \(p_{\text{SM}}(y|\boldsymbol{y}_{<n}) = \frac{C(y_1, \dots, y_n)}{C(y_1, \dots, y_{n-1})}\), \(C\): \# occurences
+
+\definition{Lidstone smoothing} Add smoothing param. \(\lambda\). (\(\lambda=1\): Laplace smoothing):
+\(p_{\text{SM}}(y|\boldsymbol{y}_{<n}) = \frac{C(y_1, \dots, y_n) + \lambda}{C(y_1, \dots, y_{n-1}) + V\lambda}\), \(V\): vocab. size
+
+\definition{Neural Probabilistic LM (NPLM)} Concatenates \(n-1\) prefix embeddings and passes the result through a feed-forward layer:
+\(y = b + Wx + U \text{tanh}(d + Hx)\)\\
+$\to$ can understand similarities betw. words; params shared across different contexts ($\to$ fewer params than n-gram model); trained with GD
+
+% \subsection{Pushdown LMs}
+
+% \definition{Context-free Grammar (CFG)} 4-tuple \((\Sigma, \mathcal{N}, \mathcal{S}, \mathcal{P})\): \(\Sigma\): alphabet of terminal symbols, \(\mathcal{N}\): non-empty set of non-terminals i.e. \(\mathcal{N} \cap\ \Sigma = \emptyset\), \(\mathcal{S}\): start (non-terminal) symbol, \(\mathcal{P}\): set of production rules: $\forall p\in\mathcal{P}: \ p=X\to \alpha, X\in\mathcal{N}, \alpha \in (\mathcal{N}\cap\Sigma)^*$
+
+% \example Langugage \(\mathcal{L}=\{a^nb^n|n\in \mathbb{N}\}\) \(\Sigma=\{a,b\},\mathcal{N}=\{X\},S=X,\mathcal{P}=\{X\to aXb, X\to\epsilon\}\)
+
+% \definition{Weighted CFG} Adds \(\mathcal{W}: \mathcal{P}\to\mathbb{R}\) to tuple, assigning each production rule a real-valued weight.
+
+% \definition{Probabilistic CFG} Weighted CFG for which \((1) \forall X \to \alpha \in P, W(X \to \alpha) \geq 0\), (2) \(\sum_{X\to \alpha\in\mathcal{P}} \mathcal{W}(X\to \alpha) = 1\)

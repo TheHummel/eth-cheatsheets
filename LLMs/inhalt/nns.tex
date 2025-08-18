@@ -1,0 +1,123 @@
+\section{NEURAL NETWORK MODELING}
+
+\subsection{RNNs}
+
+\definition{Recurrent neural sequence model (RNSM)} 5-Tuple $(\Sigma, D, \mathbf{f}, \mathbf{E}, \mathbf{h}_0)$ with $\mathbf{E}\in \mathbb{R}^{|\bar{\Sigma}|\times D}, {f}_{\Delta^{|\bar{\Sigma}|-1}}:\mathbb{R^{|\bar{\Sigma}|}}\to\Delta^{|\bar{\Sigma}|-1}$:
+$p_SM(y_t|\mathbf{y}_{<t})=\mathbf{f}_{\Delta^{|\bar{\Sigma}|-1}}(\mathbf{E}\ \text{enc}_\mathcal{R}(\mathbf{y}_{<t}))_{y_t}=\mathbf{f}_{\Delta^{|\bar{\Sigma}|-1}}(\mathbf{Eh}_{t-1})_{y_t}$
+
+\theorem Softmax RNSM with bounded act. fct. $f$ is tight
+
+\definition{Linear RNN} 
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item \(h_0 \in \mathbb{R}^D\)
+    \item \(h_t = A(h_{t-1}+Becx_t), \quad h_t\in \mathbb{R}^D, \\A\in \mathbb{R}^{D\times D}, B\in \mathbb{R}^{D\times k}, e: \bar{\Sigma} \to \mathbb{R}^k \)
+\end{enumerate*}
+
+\definition{Elman RNN} \(h_t = \sigma(Uh_{t-1}+Ve'(t_t)+b_h)\), $e':\Sigma\to\mathbb{R}^R$ embedding fct., $\mathbf{b}_h\in\mathbb{R}^D, \mathbf{U}\in\mathbb{R}^{D\times D}, \mathbf{V}\in\mathbb{R}^{D\times R}$
+
+\definition{Heaviside function} $H(x) = x>0 \ ? \  1:0 $
+\comment HE RNNs can only repr. determ. finite-state languages; if $\sigma$ is replaced with fct. mapping to infinite set it becomes turing complete
+
+\textbf{PFSA $\to$ HE RNN}: must be determinizable; $D=|\Sigma|\cdot|Q|$; $R=|\Sigma|$
+
+\example
+Given \(\mathbf{h}_t = f(\mathbf{h}_t, y_t)\); \(p(y_t|\mathbf{y}_{<t}) = \text{softmax}(\mathbf{Eh}_{t-1})_{y_t}\): \(O(kt+|\bar{\Sigma}|D)\), \(p(\mathbf{y}): O(|\mathbf{y}||\bar{\Sigma}|D)\) (as this type of RNN induces LN LM)
+
+% \subsection{Representational Capacity of RNNs} TODO
+
+\subsection{Transformer-based LMs}
+
+\definition{Transformer SM} 4-tuple \((\Sigma, D, enc_{\mathcal{T}},\mathbf{E})\) defining the SM \(p_{SM}(\bar{y}_t|\mathbf{y}_{<t})=\text{softmax}(\mathbf{Eh}_{t-1})_{\bar{y}t}, \ {\mathbf{h}_{t-1}}=\text{enc}_\mathcal{T}(\mathbf{y}_{<t})\)
+
+\definition{Attention} Let \(f:\mathbb{R}^D \times \mathbb{R}^D \to \mathbb{R} \ \text{scoring fct.}, f_{\Delta^{D-1}} \ \text{proj. fct.}, \textbf{q}\in \mathbb{R}^D, \textbf{K}_t = (\textbf{k}_1^T, \cdots\, \textbf{k}_t^T)\in \mathbb{R}^{t\times D}, \textbf{V}_t \in \mathbb{R}^{t\times D}
+\) \\
+\textbf{Attention} over \(\textbf{K}_t, \textbf{V}_t\), denoted by \(\text{Att}(q, \textbf{K}_t, \textbf{V}_t)\), involves: 
+
+$\textbf{s}_t = \textbf{f}_{\Delta^{D-1}} \big( f(\textbf{q}, \textbf{k}_1), \dots, f(\textbf{g}, \textbf{k}_t) \big) $
+
+$\textbf{a}_t = (\text{Att}(\textbf{q}, \textbf{K}_t, \textbf{V}_t) = s_1 \textbf{v}_1 +  \dots + s_t \textbf{v}_t$
+
+Most common choice for $f$: 
+$f(\textbf{q}, \textbf{k}) = \frac{1}{\sqrt{D}}<\textbf{q, \textbf{k}}>$
+
+\definition{Soft attention} \(\textbf{f}_{\Delta^{D-1}} = \text{softmax}\)
+
+\definition{Averaging hard attention} \(\textbf{f}_{\Delta^{D-1}}= \text{hardmax}_{\text{avg}}(\mathbf{x})_d = \begin{cases}
+    \frac{1}{|\text{argmax(x)}|} & \text{if} \ d\in \text{argmax}(x) \\
+    0 & \text{else}
+\end{cases}
+\)
+
+\definition{Unique hard attention} For \(\mathbf{x} \in \mathbb{R}^D\), sample \(\hat{d} \sim \text{Unif(argmax(\textbf{x}))}\) or choose some \(\hat{d} \in \text{argmax(\textbf{x}})\) determ. \(\textbf{f}_{\Delta^{D-1}}= \text{hardmax}_{\text{uni}}(\mathbf{x})_d = \begin{cases}
+    1 & \text{if} \ d = \hat{d} \\
+    0 & \text{else}
+\end{cases}
+\)
+
+
+\definition{Transformer layer} Let \(Q, K, V, O: \mathbb{R}^D\to \mathbb{R}^D\) and $W_Q, W_K, W_V, W_O \in \mathbb{R}^{D\times D}$ parametrized. \\
+\textbf{Transformer layer} \(\textbf{T}:\mathbb{R}^{T\times D } \to \mathbb{R}^{T\times D }\) for input \(\textbf{X} = (\textbf{x}_1^T, \cdots \textbf{x}_T^T)\): \\
+
+$Q(\mathbf{x}_t) = \mathbf{x}_t \mathbf{W}_Q, K(\mathbf{x}_t) = \mathbf{x}_t \mathbf{W}_K, V(\mathbf{x}_t) = \mathbf{x}_t \mathbf{W}_V, \mathbf{W}_Q, \mathbf{W}_K, \mathbf{W}_V \in \mathbb{R}^{D\times D}$\\
+
+$\textbf{a}_t = \text{Att}(\mathbf{x}_t \mathbf{W}_Q, \mathbf{X}_t \mathbf{W}_K, \mathbf{X}_t \mathbf{W}_V)  + \textbf{x}_t$
+
+$\textbf{z}_t = O(\textbf{a}_t) + \textbf{a}_t$
+
+$\rightarrow T(\textbf{X}) = \textbf{Z}= (\textbf{z}_1^T, \cdots \textbf{z}_T^T) \in \mathbb{R}^{T\times D}$
+
+\definition{Transformer} L-layer D-dimensional model over \(\Sigma\) with hidden state \(\textbf{h}_t =\text{enc}_\mathcal{T}(y_1...y_t)=\text{enc}_\mathcal{T}(\textbf{y}), 1 \leq \ell < L\) and $F:\mathbb{R}^D\to\mathbb{R}^D$:
+
+$\mathbf{X}^1 = \big( \mathbf{e}'(y_0), \dots, \mathbf{e}'(y_t) \big), \
+\mathbf{Z}^\ell = \mathbf{T}_\ell(\mathbf{X}^\ell), \\
+\mathbf{X}^{\ell+1} = \mathbf{Z}^\ell, \
+\mathbf{h}_t = \mathbf{F}(\mathbf{z}_t^\mathbf{L})$ \quad \textcolor{mygray}{($F$: MLP)}
+
+
+\definition{Attention Block} Let \(\textbf{X}\in \mathbb{R}^{T\times D}\) input encodings\\
+\textbf{Attention block} \(\mathbf{A}: \mathbb{R}^{T\times D}\to \mathbb{R}^{T\times D}\):
+
+$\mathbf{A}(\mathbf{X}) = \textbf{f}_{\Delta^{D-1}} ((\mathbf{XW}_Q)(\mathbf{XW}_K)^T)(\mathbf{XW}_V)$
+
+with \textbf{attention matrix} 
+$\mathbf{U} = (\mathbf{X}\mathbf{W}_Q)(\mathbf{X}\mathbf{W}_K)^T \in \mathbb{R}^{T\times T}$
+
+
+
+\textbf{COMPLEXITY} \\
+\textbf{Runtime}: 
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item Queries, Keys, Values (e.g. $Q=XW_Q$): $O(TD^2)$
+    \item Attention Matrix: $O(T^2D)$
+    \item Softmax: $O(T^2)$
+    \item Attention block: $O(T^2D)$
+    \item Final proj.: $O(TD^2)$
+\end{enumerate*}
+
+\textbf{Params}:
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item each attention layer: $4\cdot(D\cdot h\cdot H) = 4D^2$
+    \item final MLP (2 lin. layers with hidden dim $4D$): $2\cdot(D\cdot 4D) = 8D^2$
+    \item total (given $L$ transformer layers): $12D^2L$
+\end{enumerate*}
+
+
+\definition{Masked Attention Block} $\textbf{f}_{\Delta^{D-1}}((\mathbf{X}\mathbf{W}_Q)(\mathbf{X}\mathbf{W}_K)^T \odot \mathbf{M})(\mathbf{X}\mathbf{W}_V)$
+
+with \(M_{i, j} = 
+\begin{cases}
+    1 & \text{if} \ i\leq j\\
+    -\infty & \text{else}
+\end{cases}, \ 0\leq i,j < T\)
+
+\definition{Positional encoding} Let \(\mathbf{e}':\bar{\Sigma}\to\mathbb{R}^D\) symbol repr.fct. and \(\mathbf{f}_{pos}:\mathbb{N}\to\mathbb{R}^D\) positional encoding. \\
+\textbf{Position-augmented} repr. fct. of symbol \(y_t\) in string \(\textbf{y}\):\\
+$\mathbf{e}_{pos}(y_t)=\mathbf{e}'(y_t)+\mathbf{f}_{pos}(t)$
+\example \(n\to [\text{sin}(\frac{n}{2\pi}), \text{cos}(\frac{n}{2\pi})]\); add info about rel./abs. pos. in seq.
+
+\definition{Multi-Head Attention Block} Let H be number of attention heads: 
+$\text{MH-A}(\mathbf{X}) = \mathbf{f_H}((\text{concat}_{0 \le h < H}((\text{softmax}($\\
+$(Q_h(\mathbf{X})K_h(\mathbf{X})^\top))V_h(\mathbf{X})))))$ \\
+head dimension usually: \(h = \frac{D}{H}\)
+
+% \definition{Layer Normalization} TODO

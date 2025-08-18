@@ -1,0 +1,59 @@
+\section{FOUNDATIONS}
+\subsection{Measure Theory}
+
+\definition{Probability Space} Triple \((\Omega, \mathcal{F}, \mathbb{P})\):\\
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item \(\mathbb{P}\) is a measure
+    \item \(\mathbb{P}(\Omega) = 1\)
+    \item \(\mathcal{F} \subseteq 2^\Omega\)
+\end{enumerate*}
+
+\example Infinite toin coss paradox:\\
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item \(\Omega = \{a, b\}^\infty\)
+    \item $p(a|\mathbf{y})=p(b|\mathbf{y}) = \frac{1}{2}$
+    \item $1=p(\Sigma^\infty)=p(\bigcup_{\omega\in\Sigma^\infty}\omega)=$\\
+    $\sum_{\omega\in\Sigma^\infty}p(\omega)=\sum_{\omega\in\Sigma^\infty}0 = 0$
+    \item resolved by setting $p(\text{EOS}|\mathbf{y})>0$
+\end{enumerate*}
+
+\definition{\(\sigma\)-Algebra} Set \(\mathcal{F} \subseteq \mathcal{P}(\Omega\)) with:\\
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item \(\Omega\in\mathcal{F}\)
+    \item \(\mathcal{E} \in \mathcal{F} \implies \mathcal{E}^C \in\mathcal{F}\) 
+    \item \(\mathcal{E}_1, \mathcal{E}_2, ...\) countable sequence of sets in \(\mathcal{F} \implies \bigcup_n \mathcal{E}_n \in \mathcal{F}\)
+\end{enumerate*}\\
+\(\mathcal{F}\) is \(\sigma\)-Algebra over \(\Omega \implies\) tuple \((\Omega, \mathcal{F})\) is a \textcolor{mygreen}{measurable space}.
+\example \\
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item \(\Omega=\{1, 2, 3\}, \mathcal{F}=\{\emptyset, \{1\}, \{2, 3\}, \{1, 2, 3\}\}\)
+    \item \(\mathcal{F} = \{\Omega, \emptyset\}\) \textcolor{mygray}{(trivial \(\sigma\)-algebra)}
+    \item \(\mathcal{F} = \mathcal{P}(\Omega)\) \textcolor{mygray}{(discrete \(\sigma\)-algebra)}
+    \item Given \(\mathcal{A} \subseteq \Omega, \mathcal{F} := \{\emptyset, \mathcal{A}, \Omega\setminus\mathcal{A}, \Omega\}\) is a \(\sigma\)-algebra induced by \(\mathcal{A}\).
+\end{enumerate*}
+
+\definition{Probability Measure} Function \(\mathbb{P}: \mathcal{F} \rightarrow [0, 1]\) over measure space \((\Omega, \mathcal{F})\)\\
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item \(\mathbb{P}(\Omega) = 1\)
+    \item \(\mathcal{E}_1, \mathcal{E}_2, ... \) countable sequence of disj. sets in $\mathcal{F}$ \(\implies \mathbb{P}(\bigcup_n\mathcal{E}_n) = \sum_n\mathbb{P}(\mathcal{E}_n)\)
+\end{enumerate*}
+
+\example \(\mathbb{P}([a,b])=\int_a^b f(x)dx\)
+
+% \textcolor{mypurple}{How to construct a \(\sigma\)-algebra?}
+% \begin{itemize}
+%     \item Let \(\Omega = \mathbb{R}\)
+%     \item Let 
+% \end{itemize}
+
+
+\definition{Random Variable} Measurable function \(X: \Omega \rightarrow \mathcal{S}\) for measure spaces \((\Omega, \mathcal{F})\) and \((\mathcal{S}, \mathcal{T})\).
+
+\definition{Measurable Function} Function \(X: \Omega \rightarrow \mathcal{S}\) s.t.:
+$\epsilon\in\mathcal{T} \implies X^{-1}(\epsilon)\in\mathcal{T}$
+
+\subsection{Linear Algebra}
+\begin{enumerate*}[label=\textbullet, itemjoin={\quad}]
+    \item \(cos(\theta) = \frac{x \cdot y}{||x||\cdot||y||}\)
+    \item \(||x|| = \sqrt{<x,x>}\)
+\end{enumerate*}

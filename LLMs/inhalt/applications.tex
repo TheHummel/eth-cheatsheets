@@ -1,0 +1,34 @@
+\section{APPLICATIONS \& SCALING}
+
+\subsection{Prompting \& Zero-shot inference}
+\textcolor{mygreen}{+ doesn't require param updates}
+Head-based finetuning: [CLS] + input $\rightarrow$ output label\\
+Prompting: [CLS] + input + template text + [MASK] $\rightarrow\mathcal{M}(y)$ (label-word mapping): $p(y|x_{in}) = p([\text{MASK}]=\mathcal{M}(y)|x_{\text{prompt=in+tmp}})$
+
+\textbf{Few-shot Prompting}: Augment the prompt with input/output examples
+% : \textcolor{mygray}{“Great Britain’s capital is London. Germany’s capital is Berlin. France’s
+% capital is [X]”.}
+
+\textbf{Chain of Thought (CoT) Prompting}: Eliciting the model to produce a step-by-step solution of a
+problem
+
+\subsection{Multimodal LMs}
+\textbf{Multimodal Fusion}: take both visual $v$ \& text $w$ features; map to contextualized multimodal repr. $\tilde{v}, \tilde{w}$; Merged attention: concat features \& feed into single transformer block; Co-attention: features fed into different tranformer blocks, then cross-attention between them\\
+\textbf{Multimodal Language pretraining}: a) Masked language modeling: rand. mask input words; predict tokens based on surr. words \& paired image; b) Image Text Matching
+
+\subsection{Instruction tuning}
+finetune LMs on collection / mixture of NLP tasks described via instructions $\to$ model can follow NEW instrusctions
+
+\subsection{Reinforcement Learning from Human Feedback (RLHF)}
+\textbf{Instruct GPT}: \textbf{1. Supervised Finetuning (SFT)}: human-written output for given prompt used to finetune model in supervised manner; \textbf{2. Collecting comparison data \& Training a reward model}: prompt \& several model outputs sampled; labeler ranks outputs; used to train REWARD model to predict human preferences; \textbf{3a Direct Preference Optimization (DPO)}; \textbf{3b. Learning from Human Feedback (RLHF)}: use reward model $R(s; \text{prompt})$ to obtain scores w/o human labeler; find best gen. model $p_\theta$ which maximizes: $\hat{\theta} = \text{argmax}_\theta \mathbb{E}_{\hat{s}\sim p_\theta}[R(s; \text{prompt})]$; GD update: $\nabla_\theta \mathbb{E}_{s \sim p_\theta}[R(s;p)] \approx \frac{1}{n} \sum_{i=1}^n R(s_i;p) \nabla_\theta \log p_\theta(s_i)$
+
+
+\subsection{RAG}
+LM's knowledge without RAG: hard to interpret, trust or modify \\
+\textbf{Parametric LMs}: incorporate pretrained entity embeddings in token embeddings: align mentions in input text with entities in KB; inc. knowledge as add. memory layer in transformer\\
+\textbf{Vector Space Model}: ex.: bag-of-words: docs \& queries represented as |V|-dimensional vets;  $cos(d_j, q) = \frac{d_j\cdot q}{||d_j||||q||}$; simplest repr.: matrix of word counts for each doc\\ \textbf{tf-idf}: improved repr. of BoW: (1) term freq. $\text{tf}_{t,d}=log(\text{count}(t,d)+1)$, (2) document freq $\text{df}_t$= \#docs term $t$ occurs in, (3) inverse doc freq. $\text{idf}_t=log \frac{\#\text{docs}}{\text{df}_t}$, (4) $\text{tf-idf}(t,d)=\text{tf}_{t,d}\cdot\text{idf}_t$; $\text{score}(q,d)=\sum_{t\in q}\frac{\text{tf-idf}(t,d)}{\sqrt{\sum_{d_i\in d}\text{tf-idf}^2(d_i,d)}}$; approximated: $\text{score}(q,d)=\sum_{t\in q}\frac{\text{tf-idf}(t,d)}{|d|}$; inverted index: for each query term list of docs containing it\\
+\textbf{BM-25}: $\sum_{t\in q} \text{idf}_t\cdot\frac{\text{tf}_{t,d}}{k(1-b+b(\frac{|d|}{|d_\text{avg}|}))+\text{tf}_{t,d}}$, $k$: balance betw. $\text{tf}$ \& $\text{idf}$, $b$: importance of doc length norm.\\
+\textbf{BERT}: $h_q = \text{BERT}_Q(q)[CLS], h_d = \text{BERT}_D(d)[CLS], \text{score}(d,q)=h_q\cdot h_d$\\
+\textbf{Dense passage retriever (DPR)}: 2 sep. encoders for question $E_Q$ \& text passages $E_P$; $\text{sim}(q,p) = E_Q(q)^T E_P(p)$ 
+
+\textbf{Incorporating retrieved knowledge}: \textbf{(A)} Interpolate LM output probab. (kNN LM); augment LM with data store \& interpol. $P_{LM}(x_{t+1}|x_{<t})$ with discrete distr. $P_D(x_{t+1}|x_{<t})$ estimated from data store; \textbf{(B)} Concat retrieved text with input (REALM); 1. knowledge retriever \& knowledge-augmented encoder jointly pretrained on LM taks, 2. both are finetuned on specific task, e.g. Q\&A; \textbf{(C)} incorp. retr. knowl. into tansformer layers by cross attention

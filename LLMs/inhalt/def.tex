@@ -1,0 +1,92 @@
+\definecolor{myblue}{cmyk}{1,.72,0,.38}
+\definecolor{mygreen}{RGB}{0,128,0}
+\definecolor{myorange}{RGB}{255,165,0}
+\definecolor{mygray}{RGB}{51,51,51}
+\definecolor{mypurple}{RGB}{132,43, 225}
+
+\def\firstcircle{(0,0) circle (1.5cm)}
+\def\secondcircle{(0:2cm) circle (1.5cm)}
+
+\colorlet{circle edge}{myblue}
+\colorlet{circle area}{myblue!5}
+
+\tikzset{filled/.style={fill=circle area, draw=circle edge, thick},
+    outline/.style={draw=circle edge, thick}}
+    
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+\everymath\expandafter{\the\everymath \color{myblue}}
+\everydisplay\expandafter{\the\everydisplay \color{myblue}}
+
+\renewcommand{\baselinestretch}{.8}
+\pagestyle{empty}
+
+\global\mdfdefinestyle{header}{%
+    linecolor=myblue,
+    linewidth=0.6pt,
+    backgroundcolor=myblue!5,
+    roundcorner=4pt,
+    leftmargin=0mm,
+    rightmargin=0mm,
+    skipbelow=0mm,
+    skipabove=0mm
+}
+
+\newcommand{\header}{%
+    \begin{mdframed}[style=header]
+        \sffamily\small\centering
+        \textbf{\color{myblue}Large Language Models} \\
+        \vspace{0.3ex}
+        \footnotesize\color{mygray}by~\texttt{@jalsbach}
+    \end{mdframed}
+}
+
+% commands for definitions, theorems, etc.
+\newcommand{\definition}[1]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{mygreen}#1:}
+}
+
+\newcommand{\definitionempty}[0]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{mygreen}Def.:}
+}
+
+\newcommand{\theorem}[0]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{mypurple}Thm.:}
+}
+
+\newcommand{\lemma}[0]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{myorange}Lemma:}
+}
+
+\newcommand{\comment}[0]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{mygray}Comment:}
+}
+
+\newcommand{\example}[0]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{mygray}Ex.:}
+}
+
+
+\makeatletter
+\renewcommand{\section}{\@startsection{section}{1}{0mm}%
+                                {0.1ex}%
+                                {0.1ex}%
+                                {\color{myblue}\sffamily\small\bfseries}}
+\renewcommand{\subsection}{\@startsection{subsection}{1}{0mm}%
+                                {0.1ex}%
+                                {0.1ex}%
+                                {\sffamily\small\bfseries}}
+\makeatother
+
+\setlength{\itemsep}{0.1ex}
+\setlength{\parsep}{0.1ex}
+\setlength{\topsep}{0.2ex}
+
+\setlength{\parindent}{0pt}

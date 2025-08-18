@@ -1,0 +1,56 @@
+\documentclass[10pt,landscape,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{tikz}
+\usetikzlibrary{shapes,positioning,arrows,fit,calc,graphs,graphs.standard}
+\usepackage[nosf]{kpfonts}
+\usepackage[t1]{sourcesanspro}
+\usepackage{multicol}
+\usepackage{wrapfig}
+\usepackage[top=2mm,bottom=3mm,left=2mm,right=2mm]{geometry}
+\usepackage[framemethod=tikz]{mdframed}
+\usepackage{microtype}
+\usepackage{pdfpages}
+
+\usepackage[inline]{enumitem}
+
+\usepackage{hyperref}
+
+\hypersetup{
+  pdfauthor={Jannis Alsbach},
+  pdftitle={Large Language Models Cheatsheet},
+  pdfsubject={Exam Cheatsheet},
+  pdfkeywords={LLM, machine learning, cheatsheet}
+}
+
+\let\bar\overline
+
+% Include def.tex
+\include{inhalt/def}
+
+% Compact layout settings
+\setlength{\parindent}{0pt}
+\setlength{\columnsep}{0.5cm}
+\setlength{\columnseprule}{0.4pt}
+\pagestyle{empty}
+
+\begin{document}
+\small
+\begin{multicols}{5}
+
+\header
+
+%Input content files
+\input{inhalt/foundations}
+\input{inhalt/lms}
+\input{inhalt/nns}
+\input{inhalt/training}
+\input{inhalt/applications}
+\input{inhalt/security}
+
+
+
+
+\end{multicols}
+\end{document}

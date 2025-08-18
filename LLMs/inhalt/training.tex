@@ -1,0 +1,29 @@
+\section{TRAINING \& FINETUNING}
+
+\subsection{Transfer learning}
+
+$\rightarrow$ train NN on vast text corpora; then finetune on specific task\\
+\textbf{Context. Word Vectors (COVE)}: 1. trained seq2seq for machine translation; 2. used 2-layer bidirec. LSTM encoder as starting point for other NLP tasks e.g. sentiment analysis; 3. concat GloVe embeds of a word with corresp. CoVe vec \\
+\textbf{ELMO}: 1. train separate left-to-right \& right-to-left LMs; 2. apply as "pre-trained embedds", produces L+1 interm. repres.; ELMo repr. for token $y_t$: $\gamma^{\text{task}}\sum_{l=0}^{L} s_l^{\text{task}}h_{tl}^{LM},$ where $h_{tl}^{LM}=(\overrightarrow{h}_{tl}^{LM}, \overleftarrow{h}_{tl}^{LM})$ are hidden states of the LM layers; concat ELMO vector with input $x_k$ at lowest layer\\
+\textbf{BERT}: bidir. transformer encoder; Tokenizer: $\text{score} = \frac{\mathrm{freq}_{\mathrm{pair}}}{\mathrm{freq}_{\mathrm{first}} \cdot \mathrm{freq}_{\mathrm{second}}}$\\
+\textbf{RoBERTa}: robustly opt. BERT; same model arch.; larger pre-training corpus, batch size input seq. length\\
+\textbf{ALBERT}: A Lite Bert; cross-layer param. sharing, embed matrix decomposed into 2 projecting words to lower dim. embed space to be projected to hidden space; sentence order pred. (SOP) builds pos. examples (same as BERT) and neg. examples by swapping order ; param count of BERT base 108M $\rightarrow$ 12M\\
+\textbf{ELECTRA}: BERT modif.; pre-trained with Replaced Token Detection (RTP) obj. (self-supervised) instead of generative; generator creates corrupted versions of input data; discriminator trained to dist. between orig. \& corr. data at token level\\
+\textbf{T5}: trained with text infilling obj.; model trained on predicting randomly masked text spans
+
+\subsection{Parameter-efficient finetuning}
+\textbf{IDEA 1: Finetune random small part of network}
+
+\textbf{Specification-based tuning}: finetune only a few params; 1/4 of final layers of BERT produce 90\% of full-finetuning perf.
+
+\textbf{BitFit}: optimize bias terms in model (both attention \& MLP layers) while freezing other params; 95\% of full-finetuning perf.
+
+\textbf{IDEA 2: Learn spec. part of network to be updated} \\
+\textbf{Diff pruning}: reparam. finetuned params as sum of pretrained params \& sparse finetuning update vector: $\theta_{FT}=\theta_{LM}+\delta_{Diff}$
+
+\textbf{IDEA 3: Adapters}:
+Add adapter layers within transformer layer; freeze all params \& only finetune adapter params; place 2-layer FFN with bottleneck after each sublayer: $\mathbf{h} \leftarrow \mathbf{h} + f(\mathbf{h}\mathbf{W}_{down})\mathbf{W}_{up}$
+
+\textbf{IDEA 4: Prefix Tuning}: freeze transformer params \& optimize (acrtivations corresp. to) prefix for each task e.g. summarization, translation; only need to store prefix representations for each task; modular \& space-efficient; prefix activations for all layers are learnt; reparam. param matrix $P_\theta$ by smaller matrix $P_\theta'$: $P_\theta = MLP_\theta(P_\theta')$; after training only $P_\theta$ saved
+
+\textbf{IDEA 5: Low Rank Adapt. (LoRA)}: pretrained matrix $W_0\in\mathbb{R}^{D\times D}$; finetuning update: $W_0+\Delta W = W_0+BA$ with $B\in \mathbb{R}^{d\times r}, A\in \mathbb{R}^{r\times k}$; $rank(r) << min(d,k)$; forward pass with LoRA: $h=W_0 x$ (frozen) $+ BAx$ (trainable); \textcolor{mygreen}{+ doesn't add depth unlike adapters; + easier to optimize than prefix tuning}

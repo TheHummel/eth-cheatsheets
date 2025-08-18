@@ -1,0 +1,61 @@
+\section{SECURITY}
+
+\subsection{Adversarial Examples}
+\definition{Adversarial Example} Input $\mathbf{x} + \delta$ s.t. $f (\mathbf{x} + \delta) \neq y$ and $\delta \in S$ for classifier $f(\mathbf{x})$, true label y, and pertub. set $S$.
+\comment Adv. examples as constrained optimization: maximize $\mathcal{L}(f_\theta(x+\delta),y)$, subject to $\delta\in S$, requires access to model weights
+
+\definition{PGD attack} Starting from init. pert. $\delta\in S$
+
+$\delta_{t+1} = \text{Clip}_{[-\varepsilon, \varepsilon]} ((\delta_t + \alpha \cdot \text{sign} ((\nabla_\mathbf{x} \mathcal{L}(f(\mathbf{x} + \delta_t), y)))))$
+
+where $\text{Clip}_{[-\varepsilon, \varepsilon]}$ projects pert. back to $S$ by clipping $\delta$ back into $[-\varepsilon, \varepsilon]$
+
+\example $\nabla p_{LM}(t_{i+1}|emb(e_1),\dots,emb(e_m),$\\
+$emb(t_1),\dots,emb(t_k);emb_{img})=\nabla_{e_{img}}p_i\cdot \nabla_x emb_{img} (x)$
+
+\textbf{Attacking text-only LLMs}: challenge: input space is discrete; simple pert. set: adv. example $\mathbf{x}' = \mathbf{x} \text{(orig. input)} + \delta \text{(adv. suffix)}$; yields \textbf{Loss function} $\mathcal{L}_{\text{prefix}}(\mathbf{x}+\delta') = \mathcal{L}(y_1, \text{``Sure''}) + \dots + \mathcal{L}(y_n, \text{``that''})$, $\mathcal{L}_{\text{prefix}}(\mathbf{x}+\delta') \approx \mathcal{L}_{\text{prefix}}(\mathbf{x}+\delta) + \nabla_{\mathbf{s}_i}\mathcal{L}'(s_1, \dots, s_n) \cdot (s_i - s_i')$, where $s_i'$ embedding of $i^{\text{th}}$ token in $\delta'$
+
+\textbf{Greedy Coordinate Gradient (GCG) Attack}: computes $\nabla_{\mathbf{s}_i}\mathcal{L}'(s_1, \dots, s_n)$ and picks k tokens that maximize loss approximation; select $B \leq k·n$ of all the candidate token substitutions across all positions; pick token replacement $\delta^{(i)}$ which maximizes $\mathcal{L}_{\text{prefix}}(\mathbf{x}+\delta^{(i)}) $
+
+\comment GCG transfers betw. LLMs (white-box attack to black-box model)
+
+\textbf{Defenses}: Perplexity filters, ML classifier, Adversarial training
+
+% \begin{algorithm}[H]
+% \caption{Adversarial attack algorithm}
+% \begin{algorithmic}
+% \For{$T$ steps}
+%     \For{$1 \leq i \leq n$}
+%         \State $\mathcal{X}_i \leftarrow \text{Top-k}(-\nabla_{s_i} \mathcal{L}'(s_1, \dots, s_n))$
+%     \EndFor
+%     \For{$1 \leq b \leq B$}
+%         \State $i \leftarrow^{\$} [n]$
+%         \State $\delta_i^{(b)} \leftarrow^{\$} \mathcal{X}_i$
+%     \EndFor
+%     \State $\delta \leftarrow \delta^{(i)}$ where $i = \arg \max \mathcal{L}_{prefix}(\mathbf{x} + \delta^{(b)})$
+% \EndFor
+% \end{algorithmic}
+% \end{algorithm}
+
+
+\subsection{Watermarking}
+bias LLM away from true $p(s_{i+1}|s_i)$\\
+\textbf{Hard Red-List WM} Randomly partition vocab $V$ into $G$ \& $R$ list for each generated token based on prev. token as seed; model restricted to select tokens from $G$; z-test to eval. whether text has WM: $z=\frac{2(|s|_G-T/2)}{\sqrt{T}}, T=\text{\#tokens}, |s|_G=\text{\#green list tokens used}$; large pos. z $\to$ likely WM
+
+\textbf{Soft Red-List WM} $p_i = \begin{cases}
+    \frac{e^{k_i-\delta}}{\sum_{j\in R}e^{k_j-\delta}+\sum_{j\in G}e^{k_j}} & \text{if} \ i \in R\\
+    \frac{e^{k_i}}{\sum_{j\in R}e^{k_j-\delta}+\sum_{j\in G}e^{k_j}} & \text{if} \ i \in G
+\end{cases} \ , k: \text{logits}$
+% subtract constant $\delta$ from logits of red-listed tokens; only enforces WM when multiple good choices available
+
+\textbf{Binom. distr.}: $\mu=np, \sigma=\sqrt{n\cdot p\cdot q}$
+
+\subsection{Prompt injection}
+\textbf{Defenses}: train model against attacks; escape attached data;,$2^{nd}$ LM to detect injection; instruction hierarchy; quarantined LLMs (SW wrapper injects actual data)
+
+\subsection{Data poisoning/Backdoors}corrupt moderate amount of training data; backdoored input-output pairs; mislabeled model completions; poisoned reward model
+
+\subsection{Model Stealing}
+\textbf{Distillation}: attacker tries to fit model $\hat{f}$ to data $(\mathbf{x}, f(\mathbf{x}))$\\
+\textbf{"Cryptanalysis"}: attacker queries model to obtain pred. on input feature vecs; if API returns confidence val $f_1(x)$, obtains LE $w\cdot x + b= \sigma^{-1}(f_1(x))$ for each query; querying d+1 random d-dim inputs, can solve d+1 unknown params\\
+\textbf{Attacking Transformers}: A: recover hidden dim; 1. query model on $n$ random propmts $p_i$ to obtain logit vets $W\cdot g(p_i)$; 2. construct $Q = WH$ with each column being logit vec; 3. return rank of Q; B: recover embed proj. matrix: 1. SVD of $Q=U\Sigma V^T$; 2. $U\Sigma=WG$ for some G
