@@ -1,0 +1,49 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{tikz}
+\usetikzlibrary{shapes,positioning,arrows,arrows.meta,fit,calc,graphs,graphs.standard,patterns}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[nosf]{kpfonts}
+\usepackage[t1]{sourcesanspro}
+\usepackage{multicol}
+\usepackage{wrapfig}
+\usepackage[top=8mm,bottom=10mm,left=8mm,right=8mm]{geometry}
+\usepackage[framemethod=tikz]{mdframed}
+\usepackage{microtype}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[inline]{enumitem}
+\usepackage{hyperref}
+
+\hypersetup{
+  pdfauthor={Jannis Alsbach},
+  pdftitle={Reliable and Trustworthy AI Summary},
+  pdfsubject={Exam Summary},
+  pdfkeywords={robustness, certification, privacy, LLMs}
+}
+
+\let\bar\overline
+
+\input{inhalt/def}
+
+% true: highlight content not taken from the slides (\begin{added}, \addedin) and show open questions (\unclear)
+% false: clean version, added content shown as normal text, \unclear hidden
+\showmarkerstrue
+
+\setlength{\parindent}{0pt}
+\setlength{\columnsep}{0.6cm}
+\setlength{\columnseprule}{0.4pt}
+\pagestyle{plain}
+
+\begin{document}
+\small
+\begin{multicols*}{2}
+
+\header
+
+\end{multicols*}
+\end{document}
