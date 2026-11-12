@@ -1,0 +1,204 @@
+\section{ADVERSARIAL ATTACKS AND DEFENSES}
+
+\subsection{Adversarial Example and Threat Models}
+\definition{Adversarial example} input $x' = x + \eta$ with a small perturbation $\eta$ that changes the
+NN's prediction although (for a human) $x'$ looks like $x$.
+
+\textbf{Examples across domains}:
+\begin{itemize}
+  \item \textbf{Noise} (images): panda (57.7\%) $+\,0.007\cdot\operatorname{sign}(\nabla_x J(\theta,x,y))$ $\to$ ``gibbon'' (99.3\%).
+  \item \textbf{Physical}: tape pieces on a stop sign $\to$ predicted as 45\,mph sign; printed glasses
+    $\to$ face recognition impersonates another person (100\% success, impersonation/dodging).
+  \item \textbf{Geometric}: MNIST ``7'' rotated by $-35^\circ$ $\to$ classified as 3.
+  \item \textbf{Self-driving}: small black rectangles, each image makes one of 3 networks steer wrongly.
+  \item \textbf{RL}: Pong frame $+\,0.001\cdot\operatorname{sign}(\nabla_x J)$ $\to$ DQN agent picks \emph{noop} instead of \emph{down}.
+  \item \textbf{NLP}: appending an irrelevant distracting sentence to a paragraph changes the reading comprehension answer.
+  \item \textbf{Audio}: noise $\times 0.001$ makes DeepSpeech transcribe any arbitrary target phrase.
+\end{itemize}
+
+\definition{Targeted vs.\ untargeted}
+\textbf{targeted}: misclassify into a \emph{specific} label $t$ (panda $\to$ gibbon);
+\textbf{untargeted}: misclassify into \emph{any} wrong label. Slightly different optimization problems.
+
+\textbf{Problem statement.} Input: NN $f: X \to C$, input $x \in X$ (targeted: also target $t \in C$ with $f(x) \neq t$).
+Output: perturbation $\eta$ s.t.
+\[
+  \text{targeted: } f(x+\eta) = t, \qquad \text{untargeted: } f(x+\eta) \neq f(x).
+\]
+
+\definition{Threat models}
+\begin{itemize}
+  \item \textbf{White box}: attacker knows model, parameters and architecture.
+  \item \textbf{Black box}: attacker knows the architecture (e.g., layers) but not the parameters (weights).
+\end{itemize}
+\textbf{Transferability}: with the same training data, train a \textbf{mirror network}, attack it white-box;
+the attack then likely succeeds on the original black-box model.
+
+\definition{Notion of distance} perturbations must be \emph{small} (a ``too perturbed'' 7 is no
+longer a 7). Similarity via an $\ell_p$ norm: $x \sim x' \iff \|x - x'\|_p < \epsilon$ with
+\[
+  \|x - x'\|_p = \Big(\textstyle\sum_{i=1}^n |x_i - x'_i|^p\Big)^{1/p}.
+\]
+\begin{itemize}
+  \item $\ell_0$ (with $0^0 = 0$, no $1/p$ root): number of changed pixels.
+  \item $\ell_2$: Euclidean distance; stays small for many small changes to many pixels.
+  \item $\ell_\infty = \max_i |x_i - x'_i|$: maximum change of any coordinate. Most common for
+    adversarial examples; argued to best capture human vision.
+\end{itemize}
+
+\subsection{Attacks}
+
+\subsubsection{Fast Gradient Sign Method (FGSM)}
+One gradient step of size $\epsilon$ per pixel. $\operatorname{sign}(g) \in \{-1, 0, 1\}$ elementwise,
+$\nabla_x \text{loss}_t = (\partial \text{loss}_t / \partial x_1, \dots, \partial \text{loss}_t / \partial x_n)$.
+
+\textbf{Targeted} (target label $t$, $\text{loss}_t$ = loss w.r.t.\ $t$):
+\begin{enumerate}
+  \item $\eta = \epsilon \cdot \operatorname{sign}(\nabla_x \text{loss}_t(x))$
+  \item $x' = x - \eta$ \quad (\emph{descend} the loss of $t$, move towards $t$)
+  \item check $f(x') = t$
+\end{enumerate}
+\textbf{Untargeted} (correct label $s$, target unknown):
+\begin{enumerate}
+  \item $\eta = \epsilon \cdot \operatorname{sign}(\nabla_x \text{loss}_s(x))$
+  \item $x' = x + \eta$ \quad (\emph{ascend} the loss of $s$, ``get away'' from $s$)
+  \item check $f(x') \neq s$
+\end{enumerate}
+\begin{itemize}
+  \item $\epsilon$ very small (e.g., 0.007); each $x_i$ is a pixel.
+  \item 1-step $\Rightarrow$ $x'$ is guaranteed to lie in the box $[x-\epsilon, x+\epsilon]$, no projection needed;
+    $x'$ lies on the \emph{boundary} of the $\ell_\infty$ region (corner of the box).
+  \item Designed to be \textbf{fast, not optimal}: does not compute a minimal perturbation.
+\end{itemize}
+
+\subsubsection{Minimal Perturbation: Carlini \& Wagner (C\&W)}
+Goal: targeted attack with $\|\eta\|_p$ \emph{minimized}, $p \in \{0, 2, \infty\}$:
+\[
+  \begin{aligned}
+    \text{find } & \eta \quad \text{minimize } \|\eta\|_p \\
+    \text{s.t. } & f(x+\eta) = t, \quad x + \eta \in [0,1]^n
+  \end{aligned}
+\]
+$f(x+\eta) = t$ is a \textbf{hard discrete constraint},
+hard to optimize with gradient methods. \textbf{Key insight: relax it.}
+\begin{enumerate}
+  \item Define $\text{obj}_t$ s.t.\ $\text{obj}_t(x+\eta) \le 0 \Rightarrow f(x+\eta) = t$.
+  \item Solve
+    \[
+      \begin{aligned}
+        \text{find } & \eta \quad \text{minimize } \|\eta\|_p + c \cdot \text{obj}_t(x+\eta) \\
+        \text{s.t. } & x + \eta \in [0,1]^n
+      \end{aligned}
+    \]
+\end{enumerate}
+\textbf{Choices for $\text{obj}_t$} ($p(t) := p_f(x')_t$ = prob. of class $t$ for input $x'$ on network $f$):
+\begin{itemize}
+  \item \textbf{I}: $\text{obj}_t(x') = \text{loss}_t(x') - 1 = -\log_2 p(t) - 1$ (cross-entropy, base 2).
+    $\text{obj}_t \le 0 \iff p(t) \ge 0.5$.
+  \item \textbf{II}: $\text{obj}_t(x') = \max(0,\, 0.5 - p(t))$. Always $\ge 0$; $= 0 \iff p(t) \ge 0.5$.
+\end{itemize}
+Both work since $p(t) \ge 0.5$ makes $t$ the highest-prob. class, so $f$ returns $t$.
+
+\textbf{Problems.}
+(1) $\|\eta\|_\infty$ is a problem for optimization.
+(2) $x + \eta \in [0,1]^n$ is a \textbf{hard box constraint}. Since $x$ is constant, it is equivalent to
+$\eta_i \in [-x_i, 1 - x_i]$ for each $i$. Two ways to handle it:
+\begin{itemize}
+  \item \textbf{Projected gradient descent (PGD)}: after each step ``fit'' all coordinates into the box:
+    $\text{project}(\eta) = (\text{clip}_1(\eta_1), \dots, \text{clip}_n(\eta_n))$,
+    \[
+      \text{clip}_i(\eta_i) =
+      \begin{cases}
+        -x_i & \eta_i < -x_i \\
+        \eta_i & \eta_i \in [-x_i, 1-x_i] \\
+        1 - x_i & \eta_i > 1 - x_i
+      \end{cases}
+    \]
+  \item \textbf{L-BFGS-B}: pass each box $\eta_i \in [-x_i, 1-x_i]$ to the optimizer (``-B'' = box constraints).
+\end{itemize}
+If additionally $\|\eta\|_\infty < e$ is required: add box constraints $\eta_i \in [-e, e]$.
+
+\subsubsection{PGD Attack}
+FGSM applied \textbf{iteratively with projection}. Commonly used for
+\textbf{adversarial training}. For $\ell_\infty$ ball of radius $\epsilon$ around $x_\text{orig}$, step size $\alpha < \epsilon$:
+\begin{enumerate}
+  \item Init $x$ at a random point in the $\epsilon$-box around $x_\text{orig}$.
+  \item Repeat for a fixed number of iterations (untargeted FGSM step of size $\alpha$, then project):
+    \[
+      \begin{aligned}
+        x' &= x + \alpha \cdot \operatorname{sign}(\nabla_x \text{loss}(x)) \\
+        x &\leftarrow \text{project}(x', x_\text{orig}, \epsilon),
+      \end{aligned}
+    \]
+    where $\text{project}$ returns the point in the $\epsilon$-box (intersected with $[0,1]^n$) closest to $x'$.
+\end{enumerate}
+\textbf{Two implementations}: (a) project the point $x'$ to the $\epsilon$-box around $x_\text{orig}$ and to $[0,1]$
+per dimension, or (b) project the change $\Delta$ to $[-\epsilon, \epsilon]$ and to the constraints that keep
+each element of the resulting point in $[0,1]$.
+
+\begin{itemize}
+  \item Goal: find a point in the region that \textbf{maximizes the loss} (which may still have the same label as $x_\text{orig}$).
+  \item Projection onto the box enforces small change, so true label remains unchanged.
+  \item Projection is linear-time in the dimension for $\ell_\infty$ and $\ell_2$.
+\end{itemize}
+
+\example{} 2D toy task: true label 0 inside the disk $x^2+y^2<16$; the NN approximates it, and its
+decision boundary cuts through the $\epsilon$-box around $x_\text{orig}$ (true label 0). Untargeted PGD, $\ell_\infty$.
+
+\begin{center}
+\begin{tikzpicture}[scale=3.4, font=\scriptsize, >=Stealth]
+  % decision boundary (schematic)
+  \fill[myblue!12] (-2.75,-1.85) -- (-1.65,-2.85) -- (-1.65,-1.65) -- (-2.75,-1.65) -- cycle;
+  \draw[myblue, thick] (-2.75,-1.85) -- (-1.65,-2.85);
+  \node[myblue, anchor=north east] at (-1.66,-1.66) {NN: 0};
+  \node[myblue, anchor=south west] at (-2.58,-2.58) {NN: 1};
+  % eps box
+  \draw[myred] (-2.6,-2.6) rectangle (-1.8,-1.8);
+  \node[myred, anchor=north west] at (-2.6,-1.8) {$\epsilon$-box};
+  \fill[myred] (-2.2,-2.2) circle (0.02) node[above] {$x_\text{orig}$};
+  % iterates: step (solid), projection (dashed)
+  \draw[->, mygray] (-1.8,-2.6) -- (-1.9,-2.7);
+  \draw[->, mygray, dashed] (-1.9,-2.7) -- (-1.9,-2.61);
+  \draw[->, mygray] (-1.9,-2.6) -- (-2.0,-2.7);
+  \draw[->, mygray, dashed] (-2.0,-2.7) -- (-2.0,-2.61);
+  \fill[mygray] (-1.9,-2.7) circle (0.012);
+  \fill[mygray] (-2.0,-2.7) circle (0.012);
+  \node[mygray, below left] at (-1.94,-2.71) {steps $x'$ (outside box)};
+  \fill[myorange] (-1.8,-2.6) circle (0.02);
+  \draw[myorange] (-1.8,-2.6) -- (-1.72,-2.52) node[above right=-2pt] {start};
+  \fill[mypurple] (-1.9,-2.6) circle (0.02);
+  \draw[mypurple] (-1.9,-2.6) -- (-1.9,-2.42) node[above] {it.\,1};
+  \fill[mypurple] (-2.0,-2.6) circle (0.02);
+  \draw[mypurple] (-2.0,-2.6) -- (-2.3,-2.68) node[left] {adv.\ (it.\,2)};
+\end{tikzpicture}
+\end{center}
+{\scriptsize
+\textcolor{myblue}{Blue line}: NN decision boundary.
+\textcolor{myred}{Red}: $\epsilon$-box and $x_\text{orig}$.
+\textcolor{myorange}{Orange}: start.
+\textcolor{mygray}{Gray}: step $x'$, leaves the box; projection back.
+\textcolor{mypurple}{Purple}: projected iterates; after it.\,2 the NN predicts 1, although the point is still
+inside the box (true label 0) $\Rightarrow$ adversarial example\par}
+
+\subsubsection{Summary of Attacks}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}p{\dimexpr(\columnwidth-0.8cm-8\tabcolsep)/4\relax}}
+\noindent\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.8cm}YYYY@{}}
+\hline
+ & \textbf{Type} & \textbf{Region} & \textbf{Optimiz\-ation} & \textbf{Outcome} \\
+\hline
+\textbf{FGSM} & targeted or untargeted & change $\eta$ fixed to $[-\epsilon,\epsilon]$
+  & exactly one $\epsilon$-sized step & on the boundary of the region \\
+\hline
+\textbf{PGD} & typically untargeted, can be targeted & any region one can project to
+  & many steps, projection to stay inside; for $\ell_\infty$ step size $< \epsilon$
+  & inside the region; tries to maximize the loss \\
+\hline
+\textbf{C\&W} & presented as targeted
+  & no real restriction except $x + \eta \in [0,1]^n$ (like all methods), which bounds $\eta$
+  & aims for small $\|\eta\|_\infty$, many steps, keeps $\eta$ in bounds
+  & in $[0,1]^n$, hopefully small $\ell_\infty$ distance to $x$ \\
+\hline
+\end{tabular}\par}
