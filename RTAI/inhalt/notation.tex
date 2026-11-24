@@ -1,0 +1,12 @@
+\section{NOTATION}
+% Shared notation for all chapters to be reused everywhere
+
+
+\begin{itemize}
+  \item $f: X \to C$: classifier (neural network, NN) from inputs $X$ to classes $C$; $\theta$: its parameters
+  \item $x$ / $x_\text{orig}$: original input; $x' = x + \eta$: perturbed (adversarial) input, $\eta$: perturbation
+  \item $s$: correct (source) label; $t$: target label; $\text{loss}_t(x)$: loss of $f$ on $x$ w.r.t.\ label $t$
+  \item $p_f(x)_t$ (short $p(t)$): probability $f$ assigns to class $t$ on input $x$
+  \item $\epsilon$: perturbation budget; $\|\cdot\|_p$: $\ell_p$ norm; $S(x)$: perturbation region around $x$
+  \item $L(\theta, x, y)$: training loss; $D$: data distribution
+\end{itemize}
