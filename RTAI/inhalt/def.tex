@@ -1,0 +1,124 @@
+\definecolor{myblue}{cmyk}{1,.72,0,.38}
+\definecolor{mygreen}{RGB}{0,128,0}
+\definecolor{myorange}{RGB}{255,165,0}
+\definecolor{mygray}{RGB}{51,51,51}
+\definecolor{mypurple}{RGB}{132,43, 225}
+\definecolor{myred}{RGB}{200,30,30}
+\definecolor{myadded}{RGB}{230,110,0}
+
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+\everymath\expandafter{\the\everymath \color{myblue}}
+\everydisplay\expandafter{\the\everydisplay \color{myblue}}
+
+\renewcommand{\baselinestretch}{1.0}
+
+\global\mdfdefinestyle{header}{%
+    linecolor=myblue,
+    linewidth=0.6pt,
+    backgroundcolor=myblue!5,
+    roundcorner=4pt,
+    leftmargin=0mm,
+    rightmargin=0mm,
+    skipbelow=1ex,
+    skipabove=0mm
+}
+
+\newcommand{\header}{%
+    \begin{mdframed}[style=header]
+        \sffamily\small\centering
+        \textbf{\color{myblue}Reliable and Trustworthy AI} \\
+        \vspace{0.3ex}
+        \footnotesize\color{mygray}ETH Zürich, HS 2026 \quad by~\texttt{@jalsbach}
+    \end{mdframed}
+}
+
+% commands for definitions, theorems, etc.
+\newcommand{\definition}[1]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{mygreen}#1:}
+}
+
+\newcommand{\definitionempty}[0]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{mygreen}Def.:}
+}
+
+\newcommand{\theorem}[0]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{mypurple}Thm.:}
+}
+
+\newcommand{\lemma}[0]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{myorange}Lemma:}
+}
+
+\newcommand{\comment}[0]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{mygray}Comment:}
+}
+
+\newcommand{\example}[0]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{mygray}Ex.:}
+}
+
+\newcommand{\intuition}[0]{
+  \par\vspace{0.5ex}
+  \noindent\textbf{\color{mygray}Intuition:}
+}
+
+% markers for content NOT taken from the lecture slides (toggle in rtai.tex)
+\newif\ifshowmarkers
+
+\global\mdfdefinestyle{added}{%
+    topline=false, bottomline=false, rightline=false,
+    linecolor=myadded, linewidth=1.5pt,
+    backgroundcolor=myadded!6,
+    innerleftmargin=4pt, innerrightmargin=2pt,
+    innertopmargin=2pt, innerbottommargin=2pt,
+    leftmargin=0mm, rightmargin=0mm,
+    skipabove=0.5ex, skipbelow=0.5ex,
+    nobreak=true% never split across columns (mdframed breaks badly inside multicols)
+}
+
+% block of content added beyond the slides
+\newenvironment{added}{%
+  \ifshowmarkers
+    \begin{mdframed}[style=added]%
+    \textsf{\scriptsize\color{myadded}\textbf{[not in slides]}}\par
+  \fi
+}{%
+  \ifshowmarkers\end{mdframed}\fi
+}
+
+% short inline addition beyond the slides
+\newcommand{\addedin}[1]{%
+  \ifshowmarkers{\color{myadded}[+\,}#1{\color{myadded}\,]}\else#1\fi
+}
+
+% open question / something unclear in the slides
+\newcommand{\unclear}[1]{%
+  \ifshowmarkers
+    \par\noindent{\sffamily\scriptsize\color{myred}\textbf{[?]}~#1}\par
+  \fi
+}
+
+\makeatletter
+\renewcommand{\section}{\@startsection{section}{1}{0mm}%
+                                {1.5ex}%
+                                {0.6ex}%
+                                {\color{myblue}\sffamily\normalsize\bfseries}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{0mm}%
+                                {1ex}%
+                                {0.3ex}%
+                                {\color{myblue}\sffamily\small\bfseries}}
+\renewcommand{\subsubsection}{\@startsection{subsubsection}{3}{0mm}%
+                                {0.6ex}%
+                                {0.2ex}%
+                                {\sffamily\small\bfseries}}
+\makeatother
+
+\setlist{itemsep=0.1ex, parsep=0.1ex, topsep=0.3ex, leftmargin=1.2em}
