@@ -6,14 +6,14 @@ NN's prediction although (for a human) $x'$ looks like $x$.
 
 \textbf{Examples across domains}:
 \begin{itemize}
-  \item \textbf{Noise} (images): panda (57.7\%) $+\,0.007\cdot\operatorname{sign}(\nabla_x J(\theta,x,y))$ $\to$ ``gibbon'' (99.3\%).
+  \item \textbf{Noise} (images): panda (57.7\%) $+\,0.007\cdot\operatorname{sign}(\nabla_x J(\theta,x,y))$ $\to$ ``gibbon'' (99.3\%)
   \item \textbf{Physical}: tape pieces on a stop sign $\to$ predicted as 45\,mph sign; printed glasses
-    $\to$ face recognition impersonates another person (100\% success, impersonation/dodging).
-  \item \textbf{Geometric}: MNIST ``7'' rotated by $-35^\circ$ $\to$ classified as 3.
-  \item \textbf{Self-driving}: small black rectangles, each image makes one of 3 networks steer wrongly.
-  \item \textbf{RL}: Pong frame $+\,0.001\cdot\operatorname{sign}(\nabla_x J)$ $\to$ DQN agent picks \emph{noop} instead of \emph{down}.
-  \item \textbf{NLP}: appending an irrelevant distracting sentence to a paragraph changes the reading comprehension answer.
-  \item \textbf{Audio}: noise $\times 0.001$ makes DeepSpeech transcribe any arbitrary target phrase.
+    $\to$ face recognition impersonates another person (100\% success, impersonation/dodging)
+  \item \textbf{Geometric}: MNIST ``7'' rotated by $-35^\circ$ $\to$ classified as 3
+  \item \textbf{Self-driving}: small black rectangles, each image makes one of 3 networks steer wrongly
+  \item \textbf{RL}: Pong frame $+\,0.001\cdot\operatorname{sign}(\nabla_x J)$ $\to$ DQN agent picks \emph{noop} instead of \emph{down}
+  \item \textbf{NLP}: appending an irrelevant distracting sentence to a paragraph changes the reading comprehension answer
+  \item \textbf{Audio}: noise $\times 0.001$ makes DeepSpeech transcribe any arbitrary target phrase
 \end{itemize}
 
 \definition{Targeted vs.\ untargeted}
@@ -28,8 +28,8 @@ Output: perturbation $\eta$ s.t.
 
 \definition{Threat models}
 \begin{itemize}
-  \item \textbf{White box}: attacker knows model, parameters and architecture.
-  \item \textbf{Black box}: attacker knows the architecture (e.g., layers) but not the parameters (weights).
+  \item \textbf{White box}: attacker knows model, parameters and architecture
+  \item \textbf{Black box}: attacker knows the architecture (e.g., layers) but not the parameters (weights)
 \end{itemize}
 \textbf{Transferability}: with the same training data, train a \textbf{mirror network}, attack it white-box;
 the attack then likely succeeds on the original black-box model.
@@ -40,10 +40,10 @@ longer a 7). Similarity via an $\ell_p$ norm: $x \sim x' \iff \|x - x'\|_p < \ep
   \|x - x'\|_p = \Big(\textstyle\sum_{i=1}^n |x_i - x'_i|^p\Big)^{1/p}.
 \]
 \begin{itemize}
-  \item $\ell_0$ (with $0^0 = 0$, no $1/p$ root): number of changed pixels.
-  \item $\ell_2$: Euclidean distance; stays small for many small changes to many pixels.
-  \item $\ell_\infty = \max_i |x_i - x'_i|$: maximum change of any coordinate. Most common for
-    adversarial examples; argued to best capture human vision.
+  \item $\ell_0$ (with $0^0 = 0$, no $1/p$ root): number of changed pixels
+  \item $\ell_2$: Euclidean distance; stays small for many small changes to many pixels
+  \item $\ell_\infty = \max_i |x_i - x'_i|$: maximum change of any coordinate; most common for
+    adversarial examples; argued to best capture human vision
 \end{itemize}
 
 \subsection{Attacks}
@@ -65,10 +65,10 @@ $\nabla_x \text{loss}_t = (\partial \text{loss}_t / \partial x_1, \dots, \partia
   \item check $f(x') \neq s$
 \end{enumerate}
 \begin{itemize}
-  \item $\epsilon$ very small (e.g., 0.007); each $x_i$ is a pixel.
+  \item $\epsilon$ very small (e.g., 0.007); each $x_i$ is a pixel
   \item 1-step $\Rightarrow$ $x'$ is guaranteed to lie in the box $[x-\epsilon, x+\epsilon]$, no projection needed;
-    $x'$ lies on the \emph{boundary} of the $\ell_\infty$ region (corner of the box).
-  \item Designed to be \textbf{fast, not optimal}: does not compute a minimal perturbation.
+    $x'$ lies on the \emph{boundary} of the $\ell_\infty$ region (corner of the box)
+  \item Designed to be \textbf{fast, not optimal}: does not compute a minimal perturbation
 \end{itemize}
 
 \subsubsection{Minimal Perturbation: Carlini \& Wagner (C\&W)}
@@ -82,7 +82,7 @@ Goal: targeted attack with $\|\eta\|_p$ \emph{minimized}, $p \in \{0, 2, \infty\
 $f(x+\eta) = t$ is a \textbf{hard discrete constraint},
 hard to optimize with gradient methods. \textbf{Key insight: relax it.}
 \begin{enumerate}
-  \item Define $\text{obj}_t$ s.t.\ $\text{obj}_t(x+\eta) \le 0 \Rightarrow f(x+\eta) = t$.
+  \item Define $\text{obj}_t$ s.t.\ $\text{obj}_t(x+\eta) \le 0 \Rightarrow f(x+\eta) = t$
   \item Solve
     \[
       \begin{aligned}
@@ -93,9 +93,9 @@ hard to optimize with gradient methods. \textbf{Key insight: relax it.}
 \end{enumerate}
 \textbf{Choices for $\text{obj}_t$} ($p(t) := p_f(x')_t$ = prob. of class $t$ for input $x'$ on network $f$):
 \begin{itemize}
-  \item \textbf{I}: $\text{obj}_t(x') = \text{loss}_t(x') - 1 = -\log_2 p(t) - 1$ (cross-entropy, base 2).
-    $\text{obj}_t \le 0 \iff p(t) \ge 0.5$.
-  \item \textbf{II}: $\text{obj}_t(x') = \max(0,\, 0.5 - p(t))$. Always $\ge 0$; $= 0 \iff p(t) \ge 0.5$.
+  \item \textbf{I}: $\text{obj}_t(x') = \text{loss}_t(x') - 1 = -\log_2 p(t) - 1$ (cross-entropy, base 2);
+    $\text{obj}_t \le 0 \iff p(t) \ge 0.5$
+  \item \textbf{II}: $\text{obj}_t(x') = \max(0,\, 0.5 - p(t))$; always $\ge 0$; $= 0 \iff p(t) \ge 0.5$
 \end{itemize}
 Both work since $p(t) \ge 0.5$ makes $t$ the highest-prob. class, so $f$ returns $t$.
 
@@ -114,7 +114,7 @@ $\eta_i \in [-x_i, 1 - x_i]$ for each $i$. Two ways to handle it:
         1 - x_i & \eta_i > 1 - x_i
       \end{cases}
     \]
-  \item \textbf{L-BFGS-B}: pass each box $\eta_i \in [-x_i, 1-x_i]$ to the optimizer (``-B'' = box constraints).
+  \item \textbf{L-BFGS-B}: pass each box $\eta_i \in [-x_i, 1-x_i]$ to the optimizer (``-B'' = box constraints)
 \end{itemize}
 If additionally $\|\eta\|_\infty < e$ is required: add box constraints $\eta_i \in [-e, e]$.
 
@@ -122,7 +122,7 @@ If additionally $\|\eta\|_\infty < e$ is required: add box constraints $\eta_i \
 FGSM applied \textbf{iteratively with projection}. Commonly used for
 \textbf{adversarial training}. For $\ell_\infty$ ball of radius $\epsilon$ around $x_\text{orig}$, step size $\alpha < \epsilon$:
 \begin{enumerate}
-  \item Init $x$ at a random point in the $\epsilon$-box around $x_\text{orig}$.
+  \item Init $x$ at a random point in the $\epsilon$-box around $x_\text{orig}$
   \item Repeat for a fixed number of iterations (untargeted FGSM step of size $\alpha$, then project):
     \[
       \begin{aligned}
@@ -137,7 +137,7 @@ per dimension, or (b) project the change $\Delta$ to $[-\epsilon, \epsilon]$ and
 each element of the resulting point in $[0,1]$.
 
 \begin{itemize}
-  \item Goal: find a point in the region that \textbf{maximizes the loss} (which may still have the same label as $x_\text{orig}$).
+  \item Goal: find a point in the region that \textbf{maximizes the loss} (which may still have the same label as $x_\text{orig}$)
   \item Projection onto the box enforces small change, so true label remains unchanged.
   \item Projection is linear-time in the dimension for $\ell_\infty$ and $\ell_2$.
 \end{itemize}
@@ -202,3 +202,47 @@ inside the box (true label 0) $\Rightarrow$ adversarial example\par}
   & in $[0,1]^n$, hopefully small $\ell_\infty$ distance to $x$ \\
 \hline
 \end{tabular}\par}
+
+\subsection{Defenses}
+Main successful defenses in practice incorporate adversarial examples \textbf{during training}.
+
+\definition{Adversarial accuracy} fraction of test points that are classified correctly \textbf{and} for which
+the network is robust in a region around them (typically checked with a PGD attack).
+
+
+\textbf{Trade-off}: adversarial and test accuracy can be at odds; raising adversarial accuracy tends to lower
+test accuracy.
+
+\definition{Defense as optimization}
+\[
+  \min_\theta \rho(\theta), \quad \rho(\theta) = \mathbb{E}_{(x,y)\sim D}\Big[\max_{x' \in S(x)} L(\theta, x', y)\Big]
+\]
+\begin{itemize}
+  \item \textbf{Inner maximization}: find $x'$ with high loss (attack);
+    \textbf{Outer minimization}: find $\theta$ minimizing this worst-case loss $\to$ robust classifier
+  \item $D$: underlying distribution; $\mathbb{E}$ estimated by the empirical risk
+  \item $S(x)$: perturbation region, all points in it should be classified like $x$, e.g.\
+    $S(x) = \{x' \mid \|x - x'\|_\infty < \epsilon\}$
+\end{itemize}
+
+\definition{PGD defense (adversarial training)}
+\begin{enumerate}
+  \item Select mini-batch $B$ from dataset $D$
+  \item Compute $B_\text{max}$: for each $(x,y) \in B$ approximate with PGD
+    $x_\text{max} = \arg\max_{x' \in S(x)} L(\theta, x', y)$
+    ($x_\text{max}$ need not be adversarial, it only aims to maximize $L$)
+  \item Outer step:
+    $\theta' = \theta - \frac{1}{|B_\text{max}|}\sum_{(x_\text{max},y) \in B_\text{max}} \nabla_\theta L(\theta, x_\text{max}, y)$
+  \item Go to 1 until a stopping criterion (e.g., number of epochs)
+\end{enumerate}
+The reduction of the min-max problem to these steps is based on \textbf{Danskin's theorem}.
+
+\par\vspace{0pt plus 4\baselineskip}\penalty-200\vspace{0pt plus -4\baselineskip}% keep heading with list
+\textbf{Points to consider}:
+\begin{itemize}
+  \item \textbf{Model capacity matters}: larger networks are more defendable and less vulnerable to transferred
+    examples; PGD-training small nets hurts accuracy.
+  \item Training with \textbf{PGD} examples (many steps, projection) works better than with \textbf{FGSM}
+    examples (one step, no projection).
+  \item Even for large nets, defenses can \textbf{lower test accuracy}: more robust, yet more test points misclassified.
+\end{itemize}
