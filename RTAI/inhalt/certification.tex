@@ -1,1 +1,230 @@
 \section{NEURAL NETWORK CERTIFICATION}
+
+\subsection{Certification Problem}
+
+\definition{Problem statement} given
+\begin{itemize}
+  \item a neural network $N$
+  \item a property over inputs $\phi$ (\textbf{pre-condition})
+  \item a property over outputs $\psi$ (\textbf{post-condition})
+\end{itemize}
+prove that
+\[
+  \forall i \in I.\; i \models \phi \implies N(i) \models \psi
+\]
+holds, or return a \textbf{violation} (counterexample).
+
+\example{} \textbf{certifying robustness of an image classifier.} $N$: MNIST classifier,
+$x$: an image of an 8.
+Question: is $N$ robust around $x$?
+\begin{enumerate}
+  \item \textbf{Define $\phi$ formally} (the input region = all perturbations of the 8 we allow), e.g.
+    \begin{itemize}
+      \item \textbf{$\ell_\infty$ ball}: every pixel may change by less than $\epsilon$:
+        \[
+          \text{Ball}(x)_\epsilon = \{x' \in I \mid \|x - x'\|_\infty < \epsilon\}
+        \]
+      \item \textbf{Brightening attack}: only a few pixels get an $\epsilon$:
+        $x_0 = 0$, $x_1 = 0.975 + 0.025\epsilon_1$, $x_2 = 0.125$, \dots,
+        $x_{784} = 0.938 + 0.062\epsilon_{784}$, $\forall i.\ \epsilon_i \in [0,1]$
+    \end{itemize}
+  \item \textbf{Verify that $\phi$ satisfies $\psi$}, with
+    \[
+      \psi:\ \forall j \in [0,9],\ j \neq 8.\ o_8 > o_j,
+    \]
+    $o$: logits
+\end{enumerate}
+
+\textbf{Challenge}: $\phi$ can capture an unbounded set of points $\Rightarrow$ cannot simply enumerate the points in
+$\phi$ and check each against $\psi$.
+
+\subsection{Certification Methods}
+
+\subsubsection{Soundness and Completeness}
+\definition{Sound} Reasoning method which, upon termination, only states that a property holds if the analyzed program actually satisfies it. 
+Sound methods are called \textcolor{mygreen}{\textbf{certification methods}}.
+
+\definition{Unsound} can state that the property holds even though it does not. E.g., adversarial attacks
+are typically unsound: they may miss violations that exist.
+
+\definition{Complete} a certification method is complete if it is \textbf{always} able to prove that a
+property holds if it actually holds.
+
+\definition{Incomplete} cannot guarantee to prove a property that actually holds.
+
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\noindent\begin{tabular}{@{}ll>{\raggedright\arraybackslash}p{0.62\columnwidth}@{}}
+\hline
+\textbf{Sound} & \textbf{Compl.} & \textbf{Automated algorithm} \\
+\hline
+yes & yes & discussed in lectures \\
+yes & no & trivial: always return ``property does not hold''; non-trivial: in lectures \\
+no & yes & always return ``yes, property holds'' \\
+no & no & random guessing \\
+\hline
+\end{tabular}\par}
+
+\theorem{} (\textbf{Rice's theorem}) in general, it is \textbf{not possible} to construct an automated method
+that is both sound and complete. For restricted computations like NNs (generally \textbf{loop-free}) it is
+possible to be both, but such methods \textbf{may not scale} to realistic networks.
+
+\textbf{For certification we want}: soundness, a scalable algorithm, and precision (``as complete as possible'').
+
+\textbf{Two kinds of sound methods}:
+\begin{itemize}
+  \item \textbf{Incomplete but scalable}: convex relaxations, e.g.\ Box, DeepPoly
+  \item \textbf{Complete but not scalable}: MILP solvers, Branch and Bound with Lagrange multipliers and DeepPoly
+\end{itemize}
+
+\subsubsection{Incomplete Methods: Bound Propagation}
+Start with the pre-condition $\phi$ and ``push'' it through the network, computing an
+\textbf{over-approximation} of the effect of each layer (convex shape per layer).
+\begin{enumerate}
+  \item \textbf{Compute bounds by propagating $\phi$}: input region $\phi$ (e.g., $x_0 = 0$, $x_1 = 0.975 + 0.025\epsilon_1$, $x_2 = 0.125$, \dots,
+        $x_{784} = 0.938 + 0.062\epsilon_{784}$) $\to$ convex approximation
+    $\to \dots \to$ output region $\phi_n$ 
+    ($o_0 = 0$, $o_1 = 2.60 + 0.015\epsilon_0 + 0.023\epsilon_1 + 5.181\epsilon_2 + \dots$), $\forall i.\ \epsilon_i \in [0,1]$
+  \item \textbf{Certify the property}: check $\phi_n \models \psi$
+\end{enumerate}
+\begin{itemize}
+  \item Over-approximation: $\phi_n$ may contain concrete points that \textbf{cannot be produced} by any
+    concrete point in $\phi$
+  \item Hence if we \textbf{fail} to prove $\psi$: either the property is violated, or the method was
+    simply not precise enough
+\end{itemize}
+
+\textbf{To instantiate} an incomplete bound-propagation method we need two parts:
+\begin{enumerate}
+  \item The \textbf{convex approximation} (shape), e.g.\ Box, Zonotope, Polyhedra
+  \item How the layer acts on a given approximation: the \textbf{abstract transformer} (it transforms
+    abstract shapes)
+\end{enumerate}
+\textbf{Trade-off betw. approximation vs.\ speed}: Box transformers are fast but imprecise; Polyhedra are more
+precise but have exponential complexity.
+
+\subsection{Box / Intervals Relaxation}
+\begin{itemize}
+    \item simplest and most efficient convex relaxation
+    \item useful for certification and certified training
+\end{itemize}
+
+\subsubsection{Box Abstract Transformers}
+Box: $[a,b]$ with $a, b \in \mathbb{R}^m$, $\forall i.\ a_i \le b_i$ (one interval per neuron).
+${}^\#$ denotes the \textbf{abstract} effect of an operation on the box.
+\[
+  \begin{aligned}
+    [a,b] +^\# [c,d] &= [a+c,\ b+d] && \text{addition} \\
+    -^\#[a,b] &= [-b,\ -a] && \text{negation} \\
+    \text{ReLU}^\#[a,b] &= [\text{ReLU}(a),\ \text{ReLU}(b)] && \text{ReLU} \\
+    \lambda^\#[a,b] &= [\lambda a,\ \lambda b] && \text{const.\ } \lambda > 0
+  \end{aligned}
+\]
+
+\subsubsection{Optimal Box Transformer is not Exact}
+Case (a): Box gives $0.1 \le x_3 \le 0.7$, $-0.4 \le x_4 \le 0.2$
+(e.g.\ $x_4 = [0,0.3] +^\# (-^\#[0.1,0.4]) = [0,0.3] + [-0.4,-0.1] = [-0.4,0.2]$).
+The exact set is $\{(x_1+x_2,\ x_1-x_2) \mid 0 \le x_1 \le 0.3,\ 0.1 \le x_2 \le 0.4\}$.
+The point $x_3 = 0.7$, $x_4 = -0.4$ is in the computed Box but \textbf{infeasible}.
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize, >=Stealth, x=1.8cm, y=1.3cm,
+    baseline=(current bounding box.center),
+    neuron/.style={circle, draw, thick, minimum size=0.55cm, inner sep=0pt},
+    w/.style={fill=white, inner sep=1pt, font=\tiny}]
+  \node[neuron, draw=mypurple] (x1) at (0,0)  {$x_1$};
+  \node[neuron, draw=mypurple] (x2) at (0,-1) {$x_2$};
+  \node[neuron, draw=myblue]   (x3) at (1,0)  {$x_3$};
+  \node[neuron, draw=myblue]   (x4) at (1,-1) {$x_4$};
+  \draw[->, mygray] (x1) -- node[w, pos=0.3] {$1$} (x3);
+  \draw[->, mygray] (x1) -- node[w, pos=0.22] {$1$} (x4);
+  \draw[->, mygray] (x2) -- node[w, pos=0.22] {$1$} (x3);
+  \draw[->, mygray] (x2) -- node[w, pos=0.3] {$-1$} (x4);
+  \node[above=1pt] at (x1.north) {$[0,0.3]$};
+  \node[below=1pt] at (x2.south) {$[0.1,0.4]$};
+  \node[above=1pt] at (x3.north) {$\color{mygreen}[0.1,0.7]$};
+  \node[below=1pt] at (x4.south) {$\color{mygreen}[-0.4,0.2]$};
+\end{tikzpicture}\hspace{0.5cm}%
+\begin{tikzpicture}[font=\scriptsize, x=4cm, y=4cm, >=Stealth, baseline=(current bounding box.center)]
+  \draw[->, mygray] (0,0) -- (0.8,0) node[right] {$x_3$};
+  \draw[->, mygray] (0,-0.45) -- (0,0.25) node[above] {$x_4$};
+  \draw[myred, thick] (0.1,-0.4) rectangle (0.7,0.2);
+  \fill[myblue!25, draw=myblue, thick] (0.1,-0.1) -- (0.4,0.2) -- (0.7,-0.1) -- (0.4,-0.4) -- cycle;
+  \fill[myred] (0.7,-0.4) circle (0.012) node[right] {$(0.7,-0.4)$};
+  \node[myred, anchor=south west] at (0.7,0.2) {Box};
+  \node[myblue] at (0.4,-0.1) {exact};
+\end{tikzpicture}
+\end{center}
+
+
+\textbf{Key point: optimality vs.\ exactness}. Box transformer for the affine computation is
+\textbf{optimal for the Box relaxation}, but \textbf{not precise}: the output Box may include elements not
+feasible to obtain. Nonetheless, it may be enough to verify the property of interest.
+
+\subsubsection{Box Certification Example}
+
+\begin{example} (used for Box and MILP)
+\[
+  \begin{aligned}
+    x_3 &= x_1 + x_2, & x_5 &= \text{ReLU}(x_3), & o_0 &= x_5 + x_6 + 0.5 \\
+    x_4 &= x_1 - x_2, & x_6 &= \text{ReLU}(x_4), & o_1 &= x_5 - x_6 - 0.5
+  \end{aligned}
+\]
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize, >=Stealth, x=2.2cm, y=1.45cm,
+    neuron/.style={circle, draw, thick, minimum size=0.55cm, inner sep=0pt},
+    w/.style={fill=white, inner sep=1pt, font=\tiny}]
+  \node[neuron, draw=mypurple] (x1) at (0,0)  {$x_1$};
+  \node[neuron, draw=mypurple] (x2) at (0,-1) {$x_2$};
+  \node[neuron, draw=myblue]   (x3) at (1,0)  {$x_3$};
+  \node[neuron, draw=myblue]   (x4) at (1,-1) {$x_4$};
+  \node[neuron, draw=myblue]   (x5) at (2,0)  {$x_5$};
+  \node[neuron, draw=myblue]   (x6) at (2,-1) {$x_6$};
+  \node[neuron, draw=myorange] (o0) at (3,0)  {$o_0$};
+  \node[neuron, draw=myorange] (o1) at (3,-1) {$o_1$};
+  \draw[->, mygray] (x1) -- node[w, pos=0.3] {$1$} (x3);
+  \draw[->, mygray] (x1) -- node[w, pos=0.22] {$1$} (x4);
+  \draw[->, mygray] (x2) -- node[w, pos=0.22] {$1$} (x3);
+  \draw[->, mygray] (x2) -- node[w, pos=0.3] {$-1$} (x4);
+  \draw[->, mygray] (x3) -- node[above] {ReLU} (x5);
+  \draw[->, mygray] (x4) -- node[below] {ReLU} (x6);
+  \draw[->, mygray] (x5) -- node[w, pos=0.3] {$1$} (o0);
+  \draw[->, mygray] (x5) -- node[w, pos=0.22] {$1$} (o1);
+  \draw[->, mygray] (x6) -- node[w, pos=0.22] {$1$} (o0);
+  \draw[->, mygray] (x6) -- node[w, pos=0.3] {$-1$} (o1);
+  \node[right=1pt] at (o0.east) {$+0.5$};
+  \node[right=1pt] at (o1.east) {$-0.5$};
+  % bounds: (a) green, (b) red
+  \foreach \n/\a/\b in {x1/{[0,0.3]}/{[0,0.6]}, x3/{[0.1,0.7]}/{[0.1,1.3]},
+                        x5/{[0.1,0.7]}/{[0.1,1.3]}, o0/{[0.6,1.4]}/{[0.6,2.3]}}
+    \node[above=1pt, align=center, inner sep=0pt] at (\n.north)
+      {$\color{mygreen}\a$\\[-1pt]$\color{myred}\b$};
+  \foreach \n/\a/\b in {x2/{[0.1,0.4]}/{[0.1,0.7]}, x4/{[-0.4,0.2]}/{[-0.7,0.5]},
+                        x6/{[0,0.2]}/{[0,0.5]}, o1/{[-0.6,0.2]}/{[-0.9,0.8]}}
+    \node[below=1pt, align=center, inner sep=0pt] at (\n.south)
+      {$\color{mygreen}\a$\\[-1pt]$\color{myred}\b$};
+\end{tikzpicture}
+\end{center}
+{\scriptsize Box bounds per neuron for \textcolor{mygreen}{(a) inputs $\color{mygreen}x_1 \in [0,0.3]$,
+$\color{mygreen}x_2 \in [0.1,0.4]$} and \textcolor{myred}{(b) inputs $\color{myred}x_1 \in [0,0.6]$,
+$\color{myred}x_2 \in [0.1,0.7]$}\par}
+
+\end{example}
+
+Property: the network classifies every input in the range as 0, i.e.\ $o_0 > o_1$.
+\begin{itemize}
+  \item \textbf{\textcolor{mygreen}{(a)} Box succeeds}: $o_0 \in [0.6,1.4]$, $o_1 \in [-0.6,0.2]$; since $0.6 > 0.2$, provably
+    $o_0 > o_1$
+  \item \textbf{\textcolor{myred}{(b)} Box fails}: $o_0 \in [0.6,2.3]$, $o_1 \in [-0.9,0.8]$;
+    $0.6 \not> 0.8$, so Box cannot prove it, \textbf{even though the property actually holds}
+\end{itemize}
+
+\textbf{Fix: include the property $o_0 > o_1$ in the network} (merged into the last affine layer):
+\[
+  o_0 - o_1 = x_5 + x_6 + 0.5 - (x_5 - x_6 - 0.5) = 2x_6 + 1
+\]
+Since $x_6 \ge 0$, Box proves $2x_6 + 1 > 0$.
+
+\textbf{The problem with Box}: besides the affine transformer (above), the \textbf{ReLU} transformer also
+loses precision (fix: DeepPoly, below).
